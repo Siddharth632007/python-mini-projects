@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Result Management System</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#1b2a4a;--mu:#6b7280;--ac:#3b5bdb;--bd:#e2e6ef;--ok:#1e8e5a;--no:#c0392b;--gold:#fff3cd;--navy:#1b2a4a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#10131c;--card:#1a1f2d;--tx:#e8ecf7;--mu:#98a2b8;--ac:#6c88ff;--bd:#2b3246;--ok:#4cc38a;--no:#ff7b6b;--gold:#4a4020;--navy:#232a40}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#10131c;--card:#1a1f2d;--tx:#e8ecf7;--mu:#98a2b8;--ac:#6c88ff;--bd:#2b3246;--ok:#4cc38a;--no:#ff7b6b;--gold:#4a4020;--navy:#232a40}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#fff;text-align:center;padding:16px 10px}header h1{margin:0;font-size:1.15rem;letter-spacing:.5px}header p{margin:3px 0 0;font-size:.8rem;opacity:.75}
+.g{display:grid;gap:12px;padding:12px;max-width:1100px;margin:0 auto}@media(min-width:900px){.g{grid-template-columns:280px 1fr 300px}}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;min-width:0}
+h2{margin:0 0 10px;font-size:1rem}h3{margin:14px 0 6px;font-size:.9rem}
+label{display:block;font-size:.78rem;color:var(--mu);margin:8px 0 3px}
+input,select{width:100%;font-size:1rem;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)}
+button{font-size:.92rem;font-weight:600;border:0;border-radius:9px;padding:11px;cursor:pointer;background:var(--ac);color:#fff;width:100%;margin-top:8px}
+button.n{background:var(--navy)}button.d{background:var(--no)}button.l{background:var(--bd);color:var(--tx)}
+.row{display:flex;gap:8px}.row button{margin-top:8px}
+#pv{font-size:.82rem;font-style:italic;min-height:1.2em;margin-top:5px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}
+th{background:var(--navy);color:#fff;padding:9px 6px;cursor:pointer;white-space:nowrap;user-select:none}
+td{padding:9px 6px;text-align:center;border-bottom:1px solid var(--bd)}td.nm{text-align:left}
+tr.p td:last-child{color:var(--ok);font-weight:600}tr.f td:last-child{color:var(--no);font-weight:600}
+tr.t td{background:var(--gold)}tr.sel td{outline:2px solid var(--ac);outline-offset:-2px}
+.hint{font-size:.75rem;color:var(--mu);margin-top:8px}
+.box{padding:10px;border-radius:10px;background:var(--bg);font-size:.88rem;line-height:1.6;white-space:pre-line}
+.ch{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:18px;margin-top:6px}
+.ch div{flex:1;text-align:center;font-size:.75rem;font-weight:700;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.ch i{display:block;border-radius:5px 5px 0 0;min-height:2px;margin:2px 0}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+#ov .c{width:100%;max-width:560px}textarea{width:100%;height:240px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)}
+</style></head><body>
+<header><h1>STUDENT RESULT MANAGEMENT SYSTEM</h1><p>Student Grade &amp; Performance Analyzer</p></header>
+<div class="g">
+<div class="c">
+ <h2 id="fh">Add Student</h2>
+ <label for="nm">Student Name</label><input id="nm" autocomplete="off">
+ <label for="mk">Marks (0–100)</label><input id="mk" inputmode="decimal" autocomplete="off">
+ <div id="pv"></div>
+ <button id="sb">Add Student</button><button class="d" id="ce" style="display:none">Cancel Edit</button><button class="l" id="cf">Clear Form</button>
+ <h3>Record Actions</h3>
+ <div class="row"><button class="n" id="ed">Edit Selected</button><button class="d" id="dl">Delete Selected</button></div>
+ <h3>File</h3>
+ <div class="row"><button class="n" id="ex">Export CSV</button><button class="n" id="im">Load CSV</button></div>
+ <div class="row"><button class="n" id="rp">Export Report</button><button class="l" id="ca">Clear All</button></div>
+</div>
+<div class="c">
+ <h2>Student Records</h2>
+ <input id="se" placeholder="Search by name…">
+ <div class="tw" style="margin-top:10px"><table><thead><tr><th data-k="rank">Rank</th><th data-k="name">Name</th><th data-k="marks">Marks</th><th data-k="grade">Grade</th><th data-k="result">Result</th></tr></thead><tbody id="tb"></tbody></table></div>
+ <div class="hint">Tap a row to select it, then use Edit or Delete. Tap a header to sort. The class topper is highlighted.</div>
+ <div class="hint" id="stt"></div>
+</div>
+<div class="c">
+ <h2>Class Topper</h2><div class="box" id="top">No students added yet.</div>
+ <h3>Class Statistics</h3><div class="box" id="st">No data available yet.</div>
+ <h3>Grade Distribution</h3><div class="ch" id="ch"></div>
+ <h3>Marks Needed</h3>
+ <select id="sd"></select><button id="mn">Calculate</button><div class="hint" id="mo">Select a student and tap Calculate.</div>
+</div>
+</div>
+<div id="ov"><div class="c"><h2 id="ot"></h2><textarea id="ta"></textarea>
+ <input type="file" id="fi" accept=".csv,text/csv,text/plain" style="display:none;margin-top:8px">
+ <div class="row"><button id="oa">Copy</button><button class="l" id="oc">Close</button></div></div></div>
+<script>
+const $=s=>document.querySelector(s);
+let S=[],nid=1,edit=null,sel=null,sk=null,sr=false;
+try{const d=JSON.parse(localStorage.getItem("srms"));if(d&&Array.isArray(d.S)){S=d.S;nid=d.n||1}}catch(e){}
+const save=()=>{try{localStorage.setItem("srms",JSON.stringify({S,n:nid}))}catch(e){}};
+const grade=m=>m>=90?"A+":m>=80?"A":m>=70?"B":m>=60?"C":m>=50?"D":"F";
+const res=m=>m>=50?"PASS":"FAIL";
+function needed(m){if(m<50)return`You need ${50-m} more marks to pass.`;if(m>=90)return"You already have the highest grade (A+).";
+ for(const[b,g]of[[60,"C"],[70,"B"],[80,"A"],[90,"A+"]])if(m<b)return`You need ${b-m} more marks to reach Grade ${g}.`}
+function ranked(){const a=[...S].sort((x,y)=>y.marks-x.marks);let r=0,p=null;return a.map((s,i)=>{if(s.marks!==p){r=i+1;p=s.marks}return{...s,rank:r}})}
+const topper=()=>S.length?S.reduce((a,b)=>b.marks>a.marks?b:a):null;
+function stats(){if(!S.length)return null;const m=S.map(s=>s.marks),p=S.filter(s=>s.result==="PASS").length;
+ return{total:S.length,avg:Math.round(m.reduce((a,b)=>a+b,0)/m.length*100)/100,hi:Math.max(...m),lo:Math.min(...m),p,f:S.length-p}}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const info=s=>`Name : ${s.name}\nMarks : ${s.marks}\nGrade : ${s.grade}\nResult : ${s.result}`;
+function status(t){$("#stt").textContent=`Total Students: ${S.length} | ${t}`}
+function render(){
+ let v=ranked(),q=$("#se").value.trim().toLowerCase();if(q)v=v.filter(s=>s.name.toLowerCase().includes(q));
+ if(sk)v=[...v].sort((a,b)=>(a[sk]>b[sk]?1:a[sk]<b[sk]?-1:0)*(sr?-1:1));
+ const t=topper();
+ $("#tb").innerHTML=v.length?v.map(s=>`<tr data-id="${s.id}" class="${s.result==="PASS"?"p":"f"}${t&&s.id===t.id?" t":""}${s.id===sel?" sel":""}"><td>${s.rank}</td><td class="nm">${esc(s.name)}</td><td>${s.marks}</td><td>${s.grade}</td><td>${s.result}</td></tr>`).join(""):`<tr><td colspan="5">No records</td></tr>`;
+ $("#top").textContent=t?info(t):"No students added yet.";
+ const x=stats();$("#st").textContent=x?`Total Students : ${x.total}\nClass Average : ${x.avg}\nHighest Marks : ${x.hi}\nLowest Marks : ${x.lo}\nPassed : ${x.p}\nFailed : ${x.f}`:"No data available yet.\nAdd students to see statistics.";
+ const cnt={"A+":0,A:0,B:0,C:0,D:0,F:0},col={"A+":"#1e8e5a",A:"#3b5bdb",B:"#2f7fbf",C:"#d99a2b",D:"#e07b39",F:"#c0392b"};
+ S.forEach(s=>cnt[s.grade]++);const mx=Math.max(1,...Object.values(cnt));
+ $("#ch").innerHTML=S.length?Object.keys(cnt).map(g=>`<div>${cnt[g]}<i style="height:${cnt[g]/mx*100}px;background:${col[g]}"></i>${g}</div>`).join(""):'<span class="hint">No data to display. Add students first.</span>';
+ const cur=$("#sd").value;$("#sd").innerHTML=S.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");if(S.some(s=>String(s.id)===cur))$("#sd").value=cur;
+}
+function valid(){const n=$("#nm").value.trim(),t=$("#mk").value.trim();
+ if(!n){alert("Student name cannot be empty.");return null}
+ const m=Number(t);if(t===""||isNaN(m)){alert("Marks must be a numeric value.");return null}
+ if(m<0||m>100){alert("Marks must be between 0 and 100.");return null}return{n,m}}
+function clearF(){$("#nm").value="";$("#mk").value="";$("#pv").textContent=""}
+function cancelE(){edit=null;$("#fh").textContent="Add Student";$("#sb").textContent="Add Student";$("#ce").style.display="none";clearF()}
+function submit(){const v=valid();if(!v)return;
+ if(edit===null){S.push({id:nid++,name:v.n,marks:v.m,grade:grade(v.m),result:res(v.m)});status(`Added '${v.n}'.`)}
+ else{const s=S.find(s=>s.id===edit);Object.assign(s,{name:v.n,marks:v.m,grade:grade(v.m),result:res(v.m)});status(`Updated '${v.n}'.`);cancelE()}
+ clearF();save();render()}
+$("#sb").onclick=submit;$("#cf").onclick=clearF;$("#ce").onclick=cancelE;
+["#nm","#mk"].forEach(i=>$(i).addEventListener("keydown",e=>{if(e.key==="Enter")submit()}));
+$("#mk").addEventListener("input",()=>{const t=$("#mk").value.trim(),p=$("#pv");if(!t){p.textContent="";return}
+ const m=Number(t);if(isNaN(m)){p.textContent="Marks must be numeric";p.style.color="var(--no)"}
+ else if(m<0||m>100){p.textContent="Marks must be 0-100";p.style.color="var(--no)"}
+ else{p.textContent=`Preview → Grade: ${grade(m)}  Result: ${res(m)}`;p.style.color=res(m)==="PASS"?"var(--ok)":"var(--no)"}});
+$("#tb").onclick=e=>{const r=e.target.closest("tr[data-id]");if(r){sel=+r.dataset.id;render()}};
+document.querySelectorAll("th").forEach(h=>h.onclick=()=>{const k=h.dataset.k;if(sk===k)sr=!sr;else{sk=k;sr=false}render()});
+$("#se").oninput=render;
+$("#ed").onclick=()=>{const s=S.find(s=>s.id===sel);if(!s){alert("Please select a student in the table first.");return}
+ edit=s.id;$("#nm").value=s.name;$("#mk").value=s.marks;$("#mk").dispatchEvent(new Event("input"));
+ $("#fh").textContent="Edit Student";$("#sb").textContent="Update Student";$("#ce").style.display="block";window.scrollTo({top:0,behavior:"smooth"});status(`Editing '${s.name}'.`)};
+$("#dl").onclick=()=>{const s=S.find(s=>s.id===sel);if(!s){alert("Please select a student in the table first.");return}
+ if(!confirm(`Delete student '${s.name}'? This cannot be undone.`))return;
+ S=S.filter(x=>x.id!==s.id);if(edit===s.id)cancelE();sel=null;save();render();status(`Deleted '${s.name}'.`)};
+$("#ca").onclick=()=>{if(!S.length){alert("There are no records to clear.");return}
+ if(!confirm("This will permanently delete ALL student records. Continue?"))return;S=[];sel=null;cancelE();save();render();status("Cleared all records.")};
+$("#mn").onclick=()=>{const s=S.find(s=>String(s.id)===$("#sd").value);if(!s){alert("Please select a student first.");return}
+ $("#mo").textContent=`${s.name} (Marks: ${s.marks}): ${needed(s.marks)}`};
+// dialog for export / import (downloads are blocked in hosted pages, so copy/paste is used)
+let mode="";
+function open(t,txt,btn,showFile){$("#ot").textContent=t;$("#ta").value=txt;$("#oa").textContent=btn;$("#fi").style.display=showFile?"block":"none";$("#ov").style.display="flex"}
+$("#oc").onclick=()=>$("#ov").style.display="none";
+$("#ex").onclick=()=>{if(!S.length){alert("There are no records to save.");return}mode="copy";
+ open("CSV (copy and save as .csv)","Name,Marks,Grade,Result\n"+S.map(s=>`"${s.name.replace(/"/g,'""')}",${s.marks},${s.grade},${s.result}`).join("\n"),"Copy",false)};
+$("#rp").onclick=()=>{if(!S.length){alert("There are no records to export.");return}mode="copy";const x=stats(),t=topper(),r=ranked(),d=new Date().toLocaleString();
+ const L=["STUDENT RESULT MANAGEMENT SYSTEM - CLASS REPORT",`Generated on: ${d}`,"=".repeat(55),"","CLASS STATISTICS",` Total Students : ${x.total}`,` Class Average : ${x.avg}`,` Highest Marks : ${x.hi}`,` Lowest Marks : ${x.lo}`,` Passed : ${x.p}`,` Failed : ${x.f}`,"","CLASS TOPPER",...info(t).split("\n").map(l=>" "+l),"","FULL STUDENT LIST (ranked by marks)",` ${"Rank".padEnd(6)}${"Name".padEnd(22)}${"Marks".padEnd(8)}${"Grade".padEnd(8)}Result`," "+"-".repeat(50),...r.map(s=>` ${String(s.rank).padEnd(6)}${s.name.padEnd(22)}${String(s.marks).padEnd(8)}${s.grade.padEnd(8)}${s.result}`)];
+ open("Class report",L.join("\n"),"Copy",false)};
+$("#im").onclick=()=>{mode="load";open("Load CSV (paste text or choose a file)","Name,Marks\n","Load",true)};
+$("#fi").onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>$("#ta").value=r.result;r.readAsText(f)}};
+function parseRow(l){const o=[];let c="",q=false;for(let i=0;i<l.length;i++){const h=l[i];if(q){if(h==='"'&&l[i+1]==='"'){c+='"';i++}else if(h==='"')q=false;else c+=h}else if(h==='"')q=true;else if(h===","){o.push(c);c=""}else c+=h}o.push(c);return o}
+$("#oa").onclick=()=>{const ta=$("#ta");
+ if(mode==="copy"){ta.select();try{navigator.clipboard.writeText(ta.value)}catch(e){try{document.execCommand("copy")}catch(_){}}$("#oa").textContent="Copied";setTimeout(()=>$("#oa").textContent="Copy",1200);return}
+ const rows=ta.value.split(/\r?\n/).filter(l=>l.trim()),h=parseRow(rows.shift()||"").map(x=>x.trim().toLowerCase()),ni=h.indexOf("name"),mi=h.indexOf("marks");
+ let ok=0,bad=0;if(ni<0||mi<0){alert("CSV needs Name and Marks columns.");return}
+ rows.forEach(l=>{const c=parseRow(l),n=(c[ni]||"").trim(),m=Number(c[mi]);if(!n||c[mi]===undefined||c[mi].trim()===""||isNaN(m)||m<0||m>100){bad++;return}
+  S.push({id:nid++,name:n,marks:m,grade:grade(m),result:res(m)});ok++});
+ save();render();$("#ov").style.display="none";alert(`Loaded ${ok} student(s).\nSkipped ${bad} invalid row(s).`);status(`Loaded ${ok} records (${bad} skipped).`)};
+render();status("Ready. Add your first student to get started.");
+</script></body></html>

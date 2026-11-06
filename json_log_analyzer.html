@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JSON Log File Analyzer</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#1b2a4a;--mu:#6b7280;--ac:#3b5bdb;--bd:#e2e6ef;--navy:#1b2a4a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#10131c;--card:#1a1f2d;--tx:#e8ecf7;--mu:#98a2b8;--ac:#6c88ff;--bd:#2b3246;--navy:#232a40}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#10131c;--card:#1a1f2d;--tx:#e8ecf7;--mu:#98a2b8;--ac:#6c88ff;--bd:#2b3246;--navy:#232a40}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#fff;text-align:center;padding:16px 10px}header h1{margin:0;font-size:1.15rem}header p{margin:3px 0 0;font-size:.8rem;opacity:.75}
+.w{max-width:820px;margin:0 auto;padding:12px;display:grid;gap:12px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;min-width:0}
+h2{margin:0 0 10px;font-size:1rem}
+textarea,input,select{width:100%;font-size:.95rem;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)}
+textarea{height:170px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace}
+button{font-size:.9rem;font-weight:600;border:0;border-radius:9px;padding:10px 14px;cursor:pointer;background:var(--ac);color:#fff}button.l{background:var(--bd);color:var(--tx)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}.row>*{flex:0 0 auto;width:auto}.row>input,.row>select{flex:1;min-width:130px}
+.k{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}@media(min-width:600px){.k{grid-template-columns:repeat(4,1fr)}}
+.k div{background:var(--bg);border-radius:10px;padding:10px;text-align:center}.k b{display:block;font-size:1.3rem}.k span{font-size:.75rem;color:var(--mu)}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:.85rem}.bar em{flex:0 0 70px;font-style:normal;font-weight:700}.bar i{display:block;height:16px;border-radius:5px;min-width:3px}.bar span{color:var(--mu)}
+.tw{overflow-x:auto;max-height:380px;overflow-y:auto}table{border-collapse:collapse;width:100%;font-size:.82rem}
+th{background:var(--navy);color:#fff;padding:8px 6px;text-align:left;position:sticky;top:0}td{padding:7px 6px;border-bottom:1px solid var(--bd);vertical-align:top}
+.lv{padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700;color:#fff}
+.err{color:#c0392b;font-size:.85rem;margin-top:8px;white-space:pre-line}.hint{font-size:.78rem;color:var(--mu);margin-top:6px}
+ol{margin:0;padding-left:20px;font-size:.88rem}ol li{margin:5px 0}
+</style></head><body>
+<header><h1>JSON LOG FILE ANALYZER</h1><p>Paste or upload JSON logs and see a summary instantly</p></header>
+<div class="w">
+<div class="c"><h2>1. Load Logs</h2>
+<textarea id="in" placeholder='Paste a JSON array, or one JSON object per line, e.g. {"timestamp":"2026-11-02 10:00:01","level":"ERROR","message":"Database timeout"}'></textarea>
+<div class="row"><button id="an">Analyze</button><button class="l" id="sm">Load sample</button><button class="l" id="cl">Clear</button><input type="file" id="fi" accept=".json,.log,.txt,application/json,text/plain"></div>
+<div class="err" id="er"></div></div>
+<div id="out" style="display:none;gap:12px;display:none">
+<div class="c k"><div><b id="k1">0</b><span>Total entries</span></div><div><b id="k2">0</b><span>Errors</span></div><div><b id="k3">0%</b><span>Error rate</span></div><div><b id="k4">0</b><span>Invalid lines</span></div></div>
+<div class="c" style="margin-top:12px"><h2>2. Entries by Level</h2><div id="bars"></div><div class="hint" id="rng"></div></div>
+<div class="c" style="margin-top:12px"><h2>3. Most Repeated Messages</h2><ol id="top"></ol></div>
+<div class="c" style="margin-top:12px"><h2>4. Browse Entries</h2><div class="row" style="margin-top:0"><select id="lf"></select><input id="q" placeholder="Search message…"></div>
+<div class="tw" style="margin-top:10px"><table><thead><tr><th>Time</th><th>Level</th><th>Message</th></tr></thead><tbody id="tb"></tbody></table></div><div class="hint" id="cnt"></div></div>
+</div></div>
+<script>
+const $=s=>document.querySelector(s);
+const COL={ERROR:"#c0392b",CRITICAL:"#8e1b1b",FATAL:"#8e1b1b",WARN:"#d99a2b",WARNING:"#d99a2b",INFO:"#3b5bdb",DEBUG:"#6b7280",TRACE:"#6b7280"};
+const SAMPLE=`{"timestamp":"2026-11-02 10:00:01","level":"INFO","message":"Server started on port 8080"}
+{"timestamp":"2026-11-02 10:00:05","level":"INFO","message":"User login successful"}
+{"timestamp":"2026-11-02 10:01:12","level":"WARNING","message":"Disk usage above 80%"}
+{"timestamp":"2026-11-02 10:02:30","level":"ERROR","message":"Database connection timeout"}
+{"timestamp":"2026-11-02 10:02:45","level":"ERROR","message":"Database connection timeout"}
+{"timestamp":"2026-11-02 10:03:10","level":"INFO","message":"User login successful"}
+{"timestamp":"2026-11-02 10:04:00","level":"DEBUG","message":"Cache refreshed"}
+{"timestamp":"2026-11-02 10:05:22","level":"ERROR","message":"Payment service unavailable"}
+{"timestamp":"2026-11-02 10:06:41","level":"WARNING","message":"Slow response from API"}
+{"timestamp":"2026-11-02 10:07:15","level":"INFO","message":"User logout"}`;
+let L=[];
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pick=(o,ks)=>{for(const k of ks)for(const x in o)if(x.toLowerCase()===k&&o[x]!=null&&o[x]!=="")return String(o[x]);return""};
+function entry(o){if(!o||typeof o!=="object"||Array.isArray(o))return null;
+ return{t:pick(o,["timestamp","time","ts","date","@timestamp"]),l:(pick(o,["level","severity","lvl","loglevel"])||"UNKNOWN").toUpperCase(),m:pick(o,["message","msg","event","text"])||JSON.stringify(o)}}
+function parse(text){text=text.trim();const out=[];let bad=0,fatal="";
+ if(!text)return{out,bad,fatal:"Please paste or upload some JSON logs first."};
+ let arr=null;try{const j=JSON.parse(text);arr=Array.isArray(j)?j:(j&&typeof j==="object"&&Array.isArray(j.logs)?j.logs:[j])}catch(e){}
+ if(arr){arr.forEach(o=>{const e=entry(o);e?out.push(e):bad++})}
+ else text.split(/\r?\n/).forEach((ln,i)=>{if(!ln.trim())return;try{const e=entry(JSON.parse(ln));e?out.push(e):bad++}catch(x){bad++}});
+ if(!out.length)fatal="No valid log entries found. Check that the text is valid JSON (an array, or one object per line).";
+ return{out,bad,fatal}}
+function analyze(){const r=parse($("#in").value);$("#er").textContent="";
+ if(r.fatal){$("#er").textContent=r.fatal;$("#out").style.display="none";return}
+ L=r.out;const n=L.length,cnt={};L.forEach(e=>cnt[e.l]=(cnt[e.l]||0)+1);
+ const er=(cnt.ERROR||0)+(cnt.CRITICAL||0)+(cnt.FATAL||0);
+ $("#k1").textContent=n;$("#k2").textContent=er;$("#k3").textContent=(er/n*100).toFixed(1)+"%";$("#k4").textContent=r.bad;
+ const mx=Math.max(...Object.values(cnt));
+ $("#bars").innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar"><em>${esc(k)}</em><i style="width:${v/mx*55}%;background:${COL[k]||"#2f7fbf"}"></i><span>${v}</span></div>`).join("");
+ const ts=L.map(e=>e.t).filter(Boolean);$("#rng").textContent=ts.length?`Time range: ${ts[0]}  →  ${ts[ts.length-1]}`:"";
+ const mc={};L.forEach(e=>mc[e.m]=(mc[e.m]||0)+1);
+ $("#top").innerHTML=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([m,c])=>`<li>${esc(m)} <b>(${c}×)</b></li>`).join("");
+ $("#lf").innerHTML='<option value="">All levels</option>'+Object.keys(cnt).map(k=>`<option>${esc(k)}</option>`).join("");
+ $("#q").value="";$("#out").style.display="block";table()}
+function table(){const lv=$("#lf").value,q=$("#q").value.toLowerCase();
+ const v=L.filter(e=>(!lv||e.l===lv)&&(!q||e.m.toLowerCase().includes(q)));
+ $("#tb").innerHTML=v.length?v.map(e=>`<tr><td>${esc(e.t)}</td><td><span class="lv" style="background:${COL[e.l]||"#2f7fbf"}">${esc(e.l)}</span></td><td>${esc(e.m)}</td></tr>`).join(""):'<tr><td colspan="3">No matching entries</td></tr>';
+ $("#cnt").textContent=`Showing ${v.length} of ${L.length} entries`}
+$("#an").onclick=analyze;$("#lf").onchange=table;$("#q").oninput=table;
+$("#sm").onclick=()=>{$("#in").value=SAMPLE;analyze()};
+$("#cl").onclick=()=>{$("#in").value="";$("#er").textContent="";$("#out").style.display="none";L=[]};
+$("#fi").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$("#in").value=r.result;analyze()};r.onerror=()=>{$("#er").textContent="Could not read that file."};r.readAsText(f)};
+</script></body></html>
